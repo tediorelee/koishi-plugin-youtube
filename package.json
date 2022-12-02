@@ -1,7 +1,16 @@
 {
   "name": "koishi-plugin-youtube",
   "description": "youtube plugin for koishi",
-  "private": true,
+  "author": {
+    "name": "TEDIORELEE",
+    "email": "tediorelee@gmail.com",
+    "url": "https://github.com/tediorelee"
+  },
+  "private": false,
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tediorelee/koishi-plugin-youtube.git"
+  },
   "version": "1.0.0",
   "main": "lib/index.js",
   "typings": "lib/index.d.ts",
