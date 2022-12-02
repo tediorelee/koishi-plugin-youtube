@@ -70,7 +70,7 @@ export function apply(ctx: Context, config: Config) {
   };
 
   ctx.middleware(async (session, next, ) => {
-    const isYoutube = session.content.includes('youtube.com') || session.content.includes('youtu.be')
+    const isYoutube = session.content.includes('youtube.com') || session.content.includes('https://youtu.be')
     if (!isYoutube) return next()
     
     try {
@@ -83,12 +83,20 @@ export function apply(ctx: Context, config: Config) {
       }
       const result = await fetchDataFromAPI(id);
       const snippet = result.items[0].snippet;
-      const { title, description, channelTitle, thumbnails } = snippet;
-      const maxresThumbnail = await ctx.http.get<ArrayBuffer>(thumbnails.maxres.url, {
+      const {
+        title,
+        description,
+        channelTitle,
+        thumbnails,
+        publishedAt,
+        tags
+      } = snippet;
+      const thumbnail = await ctx.http.get<ArrayBuffer>(thumbnails.maxres ? thumbnails.maxres.url : thumbnails.high.url , {
         responseType: 'arraybuffer',
       })
-      const descriptionShort = description.substring(0, 29)
-      return `Youtube视频内容解析\n===================\n频道: ${channelTitle}\n标题: ${title}\n简介: ${descriptionShort}\n封面: ${segment.image(maxresThumbnail)}`;
+      // const descriptionShort = description.length > 100 ? description.substring(0, 99) + '...' : description.length;
+      const tagString = tags.length > 1 ? tags.join(', ') : tags[0];
+      return `Youtube视频内容解析\n===================\n频道: ${channelTitle}\n标题: ${title}\n发布时间: ${publishedAt}\n标签: ${tagString}\n${segment.image(thumbnail)}`;
 
     } catch(err) {
       console.log(err);
