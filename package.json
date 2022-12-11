@@ -11,7 +11,7 @@
     "type": "git",
     "url": "git+https://github.com/tediorelee/koishi-plugin-youtube.git"
   },
-  "version": "1.0.0",
+  "version": "1.0.2",
   "main": "lib/index.js",
   "typings": "lib/index.d.ts",
   "files": [

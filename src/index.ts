@@ -94,8 +94,12 @@ export function apply(ctx: Context, config: Config) {
       const thumbnail = await ctx.http.get<ArrayBuffer>(thumbnails.maxres ? thumbnails.maxres.url : thumbnails.high.url , {
         responseType: 'arraybuffer',
       })
-      // const descriptionShort = description.length > 100 ? description.substring(0, 99) + '...' : description.length;
-      const tagString = tags.length > 1 ? tags.join(', ') : tags[0];
+      let tagString;
+      if (tags) {
+        tagString = tags.length > 1 ? tags.join(', ') : tags[0];
+      } else {
+        tagString = '无'
+      }
       return `Youtube视频内容解析\n===================\n频道: ${channelTitle}\n标题: ${title}\n发布时间: ${publishedAt}\n标签: ${tagString}\n${segment.image(thumbnail)}`;
 
     } catch(err) {
