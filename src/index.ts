@@ -1,19 +1,23 @@
-import { Context, segment } from 'koishi'
-import Schema from 'schemastery'
+import { Context, Schema, Quester, segment } from 'koishi'
 
 export const name = 'youtube'
 
 export interface Config {
   apiKey: string;
+  quester: Quester.Config;
 }
 
 export const Config = Schema.object({
   apiKey: Schema.string().default('').required().description('请填写你的youtube api key'),
+  quester: Quester.Config,
 })
 
 const apiEndpointPrefix = 'https://www.googleapis.com/youtube/v3/videos';
 
-export function apply(ctx: Context, config: Config) {
+export function apply(context: Context, config: Config) {
+  const ctx = context.isolate(['http'])
+  ctx.http = context.http.extend(config.quester)
+
   function MediaFormat (){
     // http://www.youtube.com/embed/m5yCOSHeYn4
     var ytRegEx = /^(?:https?:\/\/)?(?:i\.|www\.|img\.)?(?:youtu\.be\/|youtube\.com\/|ytimg\.com\/)(?:embed\/|v\/|vi\/|vi_webp\/|watch\?v=|watch\?.+&v=)((\w|-){11})(?:\S+)?$/;
