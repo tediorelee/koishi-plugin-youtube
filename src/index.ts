@@ -27,11 +27,11 @@ export function apply(context: Context, config: Config) {
     var spRegEx = /https?:\/\/(?:embed\.|open\.)(?:spotify\.com\/)(?:track\/|\?uri=spotify:track:)((\w|-){22})/;
     // https://soundcloud.com/aviciiofficial/avicii-you-make-me-diplo-remix, https://w.soundcloud.com/player/?url=https%3A//api.soundcloud.com/tracks/29395900&amp;color=ff5500&amp;auto_play=false&amp;hide_related=false&amp;show_comments=true&amp;show_user=true&amp;show_reposts=false
     var scRegEx = /https?:\/\/(?:w\.|www\.|)(?:soundcloud\.com\/)(?:(?:player\/\?url=https\%3A\/\/api.soundcloud.com\/tracks\/)|)(((\w|-)[^A-z]{7})|([A-Za-z0-9]+(?:[-_][A-Za-z0-9]+)*(?!\/sets(?:\/|$))(?:\/[A-Za-z0-9]+(?:[-_][A-Za-z0-9]+)*){1,2}))/;
-  
+
     function getIDfromRegEx ( src, regExpy ){
         return (src.match(regExpy)) ? RegExp.$1 : null;
     }
-  
+
     return {
         // returns only the ID
         getYoutubeID: function ( src ){
@@ -76,7 +76,7 @@ export function apply(context: Context, config: Config) {
   ctx.middleware(async (session, next, ) => {
     const isYoutube = session.content.includes('youtube.com') || session.content.includes('https://youtu.be')
     if (!isYoutube) return next()
-    
+
     try {
       let id;
       if (session.content.includes('https://youtu.be')) {
@@ -95,7 +95,9 @@ export function apply(context: Context, config: Config) {
         publishedAt,
         tags
       } = snippet;
-      const thumbnail = await ctx.http.get<ArrayBuffer>(thumbnails.maxres ? thumbnails.maxres.url : thumbnails.high.url , {
+      const thumbnailUrl = thumbnails.maxres ? thumbnails.maxres.url : thumbnails.high.url
+      const mime = 'image/' + thumbnailUrl.slice(thumbnailUrl.lastIndexOf('.') + 1)
+      const thumbnail = await ctx.http.get<ArrayBuffer>(thumbnailUrl, {
         responseType: 'arraybuffer',
       })
       let tagString;
@@ -104,8 +106,7 @@ export function apply(context: Context, config: Config) {
       } else {
         tagString = '无'
       }
-      return `Youtube视频内容解析\n===================\n频道: ${channelTitle}\n标题: ${title}\n发布时间: ${publishedAt}\n标签: ${tagString}\n${segment.image(thumbnail)}`;
-
+      return `Youtube视频内容解析\n===================\n频道: ${channelTitle}\n标题: ${title}\n发布时间: ${publishedAt}\n标签: ${tagString}\n${segment.image(thumbnail, mime)}`;
     } catch(err) {
       console.log(err);
       return `发生错误!;  ${err}`;
