@@ -1,19 +1,23 @@
-import { Context, segment } from 'koishi'
-import Schema from 'schemastery'
+import { Context, Schema, Quester, segment } from 'koishi'
 
 export const name = 'youtube'
 
 export interface Config {
   apiKey: string;
+  quester: Quester.Config;
 }
 
 export const Config = Schema.object({
   apiKey: Schema.string().default('').required().description('请填写你的youtube api key'),
+  quester: Quester.Config,
 })
 
 const apiEndpointPrefix = 'https://www.googleapis.com/youtube/v3/videos';
 
-export function apply(ctx: Context, config: Config) {
+export function apply(context: Context, config: Config) {
+  const ctx = context.isolate(['http'])
+  ctx.http = context.http.extend(config.quester)
+
   function MediaFormat (){
     // http://www.youtube.com/embed/m5yCOSHeYn4
     var ytRegEx = /^(?:https?:\/\/)?(?:i\.|www\.|img\.)?(?:youtu\.be\/|youtube\.com\/|ytimg\.com\/)(?:embed\/|v\/|vi\/|vi_webp\/|watch\?v=|watch\?.+&v=)((\w|-){11})(?:\S+)?$/;
@@ -23,11 +27,11 @@ export function apply(ctx: Context, config: Config) {
     var spRegEx = /https?:\/\/(?:embed\.|open\.)(?:spotify\.com\/)(?:track\/|\?uri=spotify:track:)((\w|-){22})/;
     // https://soundcloud.com/aviciiofficial/avicii-you-make-me-diplo-remix, https://w.soundcloud.com/player/?url=https%3A//api.soundcloud.com/tracks/29395900&amp;color=ff5500&amp;auto_play=false&amp;hide_related=false&amp;show_comments=true&amp;show_user=true&amp;show_reposts=false
     var scRegEx = /https?:\/\/(?:w\.|www\.|)(?:soundcloud\.com\/)(?:(?:player\/\?url=https\%3A\/\/api.soundcloud.com\/tracks\/)|)(((\w|-)[^A-z]{7})|([A-Za-z0-9]+(?:[-_][A-Za-z0-9]+)*(?!\/sets(?:\/|$))(?:\/[A-Za-z0-9]+(?:[-_][A-Za-z0-9]+)*){1,2}))/;
-  
+
     function getIDfromRegEx ( src, regExpy ){
         return (src.match(regExpy)) ? RegExp.$1 : null;
     }
-  
+
     return {
         // returns only the ID
         getYoutubeID: function ( src ){
@@ -72,7 +76,7 @@ export function apply(ctx: Context, config: Config) {
   ctx.middleware(async (session, next, ) => {
     const isYoutube = session.content.includes('youtube.com') || session.content.includes('https://youtu.be')
     if (!isYoutube) return next()
-    
+
     try {
       let id;
       if (session.content.includes('https://youtu.be')) {
@@ -91,7 +95,9 @@ export function apply(ctx: Context, config: Config) {
         publishedAt,
         tags
       } = snippet;
-      const thumbnail = await ctx.http.get<ArrayBuffer>(thumbnails.maxres ? thumbnails.maxres.url : thumbnails.high.url , {
+      const thumbnailUrl = thumbnails.maxres ? thumbnails.maxres.url : thumbnails.high.url
+      const mime = 'image/' + thumbnailUrl.slice(thumbnailUrl.lastIndexOf('.') + 1)
+      const thumbnail = await ctx.http.get<ArrayBuffer>(thumbnailUrl, {
         responseType: 'arraybuffer',
       })
       let tagString;
@@ -100,8 +106,7 @@ export function apply(ctx: Context, config: Config) {
       } else {
         tagString = '无'
       }
-      return `Youtube视频内容解析\n===================\n频道: ${channelTitle}\n标题: ${title}\n发布时间: ${publishedAt}\n标签: ${tagString}\n${segment.image(thumbnail)}`;
-
+      return `Youtube视频内容解析\n===================\n频道: ${channelTitle}\n标题: ${title}\n发布时间: ${publishedAt}\n标签: ${tagString}\n${segment.image(thumbnail, mime)}`;
     } catch(err) {
       console.log(err);
       return `发生错误!;  ${err}`;
