@@ -15,7 +15,7 @@ export const Config = Schema.object({
 const apiEndpointPrefix = 'https://www.googleapis.com/youtube/v3/videos';
 
 export function apply(context: Context, config: Config) {
-  const ctx = context.isolate(['http'])
+  const ctx = context.isolate('http')
   ctx.http = context.http.extend(config.quester)
 
   function MediaFormat (){
